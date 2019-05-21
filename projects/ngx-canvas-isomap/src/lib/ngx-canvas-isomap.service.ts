@@ -37,6 +37,9 @@ export class NgxCanvasIsomapService {
           }
         })
       );
+      if(loading === 0) {
+        resolver(true);
+      }
     });
   }
 
@@ -307,8 +310,8 @@ export class NgxCanvasIsomapService {
     ctxTarget.fillRect(0, 0, settings.parentSize[0], settings.parentSize[1]);
 
     copy(ctxTarget, settings, settingsS, ctxSourceBG, config);
-    copy(ctxTarget, settings, settingsS, ctxSource, config);
     copy(ctxTarget, settings, settingsS, ctxSourceText, config);
+    copy(ctxTarget, settings, settingsS, ctxSource, config);
   }
 
   drawImageLayer2(layer: CanvasShadowLayer, cb?: () => any) {
@@ -515,7 +518,7 @@ export class NgxCanvasIsomapService {
     const co = [];
     this.toIso([tile.coord[0], tile.coord[1]], settings, config, map, co);
 
-    tile.layers.forEach(_ => {
+    for(const _ of tile.layers) {
       if (this.preloadedImages[_]) {
         const width = settings.tileSize[0];
         ctx.drawImage(
@@ -537,7 +540,7 @@ export class NgxCanvasIsomapService {
         };
         img.src = 'assets/tiles/' + _ + '.svg';
       }
-    });
+    };
   }
 
   drawText(

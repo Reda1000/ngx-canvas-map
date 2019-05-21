@@ -23,7 +23,7 @@ const profile: CanvasConfig = {
       borderWidth: 0
     },
     tile: {
-      backgroundColor: 'white',
+      backgroundColor: 'grey',
       borderColor: 'darkgrey',
       borderWidth: 1,
       fontSize: 0.26739,
@@ -50,12 +50,12 @@ const profile: CanvasConfig = {
 @Component({
   selector: 'lib-ngx-canvas-isomap',
   template: `
-    <!--div
+    <div
       style="position: absolute; background: lightgrey; width: 1000px; bottom: 0"
     >
       {{ cvs.set | json }} <br />
       {{ shadowMap.shadow.set | json }} <br />
-    </div-->
+    </div>
     <canvas #cnvs></canvas>
     <!--canvas #shadow></canvas>
     <canvas #shadowText></canvas>
@@ -180,7 +180,10 @@ export class NgxCanvasIsomapComponent implements OnInit {
 
   @Input() public set map(map: Map<any>) {
     // check if size changed as it requires extra mechanics
-//    console.debug('map update');
+
+    // sort so that layers of tiles next dont overlap
+    map.tiles.sort((__, _) => __.coord[0] + __.coord[1] - _.coord[0] - _.coord[1]);
+
     if (
       map.size[0] !== this._map.size[0] ||
       map.size[1] !== this._map.size[1]
@@ -244,7 +247,6 @@ export class NgxCanvasIsomapComponent implements OnInit {
       limits[2] = Math.max(limits[2], _[0] + this.cvs.set.tileSize[0] + (this.cvs.set.offset[2] + this.cvs.set.border[2]) * this.cvs.set.scale) + 50;
       limits[3] = Math.max(limits[3], _[1] + this.cvs.set.tileSize[1] + (this.cvs.set.offset[3] + this.cvs.set.border[3]) * this.cvs.set.scale) + 50;
     });
-    console.log(limits);
 
     const width = limits[2] - limits[0];
     const height = limits[3] - limits[1];
@@ -253,8 +255,6 @@ export class NgxCanvasIsomapComponent implements OnInit {
       this.cvs.set.parentSize[0] / width - this.cvs.set.scale,
       this.cvs.set.parentSize[1] / height - this.cvs.set.scale
     );
-
-    console.log(scale);
 
     this.moveFn(-limits[0], -limits[1]);
     this.zoomFn(0, 0, scale);
