@@ -7,4 +7,5 @@ export * from './lib/ngx-canvas-isomap.component';
 export * from './lib/ngx-canvas-isomap.module';
 
 export * from './lib/models/canvas-config.interface';
+export * from './lib/models/canvas-control.interface';
 export * from './lib/models/map.interface';

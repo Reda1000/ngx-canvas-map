@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { Tile } from 'projects/ngx-canvas-isomap/src/lib/models/map.interface';
+import { CanvasControl } from 'projects/ngx-canvas-isomap/src/public_api';
 
 @Component({
   selector: 'app-root',
@@ -4730,6 +4731,10 @@ export class AppComponent {
     } else {
       this.mark = '';
     }
+  }
+
+  loaded(ctrl: CanvasControl) {
+    console.log(ctrl);
   }
 
   changed(map: any) {

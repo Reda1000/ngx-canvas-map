@@ -8,8 +8,8 @@
     "test": "ng test",
     "lint": "ng lint",
     "e2e": "ng e2e",
-    "pack-isomap": "npm run build ng-isomap-viewer && cd dist/ng-isomap-viewer && npm pack",
-    "publish-isomap": "npm publish ng-isomap-viewer-0.0.19.tgz"
+    "pack-isomap": "npm run build ngx-canvas-isomap && cd dist/ngx-canvas-isomap && npm pack",
+    "publish-isomap": "npm publish ngx-canvas-isomap-0.1.8.tgz"
   },
   "private": true,
   "dependencies": {

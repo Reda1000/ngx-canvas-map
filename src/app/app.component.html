@@ -1,4 +1,4 @@
 <textarea style="position: absolute" [value]="map | json" (blur)="changed($event)"></textarea>
 <button style="position: absolute; right: 400px" (click)="zoom=2">Zoom +2</button>
 <textarea style="position: absolute; right: 0" (blur)="changedTile($event)"></textarea>
-<lib-ngx-canvas-isomap class="container" (selected)="selectedTile($event)" [mark]="mark" [zoom]="zoom" [locate]="mark" [config]="config" [map]="map" [tile]="tile"></lib-ngx-canvas-isomap>
+<lib-ngx-canvas-isomap class="container" (load)="loaded($event)" (selected)="selectedTile($event)" [mark]="mark" [zoom]="zoom" [locate]="mark" [config]="config" [map]="map" [tile]="tile"></lib-ngx-canvas-isomap>

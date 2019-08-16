@@ -1,10 +1,24 @@
-import { Component, ElementRef, EventEmitter, HostListener, Input, OnInit, Output, ViewChild } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  EventEmitter,
+  HostListener,
+  Input,
+  OnInit,
+  Output,
+  ViewChild,
+  OnDestroy
+} from '@angular/core';
 
 import { CanvasConfig } from './models/canvas-config.interface';
-import { CanvasLayer, CanvasShadowLayer } from './models/canvas-layer.interface';
+import {
+  CanvasLayer,
+  CanvasShadowLayer
+} from './models/canvas-layer.interface';
 import { CanvasSettings } from './models/canvas-settings.interface';
 import { Map, Tile } from './models/map.interface';
 import { NgxCanvasIsomapService } from './ngx-canvas-isomap.service';
+import { CanvasControl } from './models/canvas-control.interface';
 
 const profile: CanvasConfig = {
   quality: 1,
@@ -50,12 +64,12 @@ const profile: CanvasConfig = {
 @Component({
   selector: 'lib-ngx-canvas-isomap',
   template: `
-    <div
+    <!--div
       style="position: absolute; background: lightgrey; width: 1000px; bottom: 0"
     >
       {{ cvs.set | json }} <br />
       {{ shadowMap.shadow.set | json }} <br />
-    </div>
+    </div-->
     <canvas #cnvs></canvas>
     <!--canvas #shadow></canvas>
     <canvas #shadowText></canvas>
@@ -66,7 +80,7 @@ const profile: CanvasConfig = {
     'canvas {width: 100%; height: 100%}'
   ]
 })
-export class NgxCanvasIsomapComponent implements OnInit {
+export class NgxCanvasIsomapComponent implements OnInit, OnDestroy {
   public _config: CanvasConfig = profile;
 
   private _map: Map<any> = {
@@ -121,35 +135,35 @@ export class NgxCanvasIsomapComponent implements OnInit {
 
   @ViewChild('cnvs')
   set bind(el: ElementRef /*| Event*/) {
-//    console.debug('cnvs found');
+    //    console.debug('cnvs found');
     this.initCanvas(this.cvs, el);
-//    console.debug('cnvs loaded');
+    //    console.debug('cnvs loaded');
     this.svc.zoom2(0, 0, 0, this.cvs);
   }
 
   @ViewChild('shadow')
   set bindShadow(el: ElementRef /* | Event*/) {
-//    console.debug('shadow found');
+    //    console.debug('shadow found');
     this.initCanvas(this.shadowMap.shadow, el, [...this.cvs.set.parentSize]);
-//    console.debug('shadow loaded');
+    //    console.debug('shadow loaded');
   }
 
   @ViewChild('shadowText')
   set bindShadowText(el: ElementRef /*| Event*/) {
-//    console.debug('shadowText found');
+    //    console.debug('shadowText found');
     this.initCanvas(this.shadowMap.shadowText, el, [
       ...this.cvs.set.parentSize
     ]);
-//    console.debug('shadowText loaded');
+    //    console.debug('shadowText loaded');
   }
 
   @ViewChild('shadowBackground')
   set bindShadowBackground(el: ElementRef /*| Event*/) {
-//    console.debug('shadowBackground found');
+    //    console.debug('shadowBackground found');
     this.initCanvas(this.shadowMap.shadowBackground, el, [
       ...this.cvs.set.parentSize
     ]);
-//    console.debug('shadowBackground loaded');
+    //    console.debug('shadowBackground loaded');
   }
 
   @Input() set mark(id: string) {
@@ -158,9 +172,10 @@ export class NgxCanvasIsomapComponent implements OnInit {
   }
 
   @Output() selected: EventEmitter<any> = new EventEmitter();
+  @Output() load: EventEmitter<CanvasControl> = new EventEmitter();
 
   @Input() public set config(newConfigRoot: CanvasConfig) {
-//    console.debug('config update');
+    //    console.debug('config update');
     const copyMap = (
       newConfigBranch: { [key: string]: any },
       config: { [key: string]: any }
@@ -182,7 +197,9 @@ export class NgxCanvasIsomapComponent implements OnInit {
     // check if size changed as it requires extra mechanics
 
     // sort so that layers of tiles next dont overlap
-    map.tiles.sort((__, _) => __.coord[0] + __.coord[1] - _.coord[0] - _.coord[1]);
+    map.tiles.sort(
+      (__, _) => __.coord[0] + __.coord[1] - _.coord[0] - _.coord[1]
+    );
 
     if (
       map.size[0] !== this._map.size[0] ||
@@ -193,32 +210,47 @@ export class NgxCanvasIsomapComponent implements OnInit {
     }
 
     this._map.tiles = map.tiles;
-    
+
     this.svc.preload(this._map).then(_ => {
-  //    console.debug('on preload');
+      //    console.debug('on preload');
       this.svc.drawImageLayer2(this.shadowMap.shadow, () => this.rerender());
       this.actionAll();
+      this.load.emit({ 
+        refresh: () => {
+          this.svc.drawImageLayer2(this.shadowMap.shadow, () => this.rerender());
+          this.actionAll();
+        }, 
+        resize: () => this.resize()
+     })
     });
   }
 
-  @Input() public set tile(tile: Tile<any>) {
-    if (!tile) { return; }
+  @Input() public set tile(tiles: Tile<any> | Tile<any>[]) {
+    if (!tiles) {
+      return;
+    }
 
-//    console.debug('tile update');
-    const exist = this._map.tiles.findIndex(
-      _ => _.coord[0] === tile.coord[0] && _.coord[1] === tile.coord[1]
-    );
-    if (exist >= 0) {
-      this._map.tiles.splice(exist, 1, tile);
-    } else {
-      this._map.tiles.push(tile);
+    tiles = [].concat(tiles);
+
+    //    console.debug('tile update');
+    for (const tile of tiles) {
+      const exist = this._map.tiles.findIndex(
+        _ => _.coord[0] === tile.coord[0] && _.coord[1] === tile.coord[1]
+      );
+      if (exist >= 0) {
+        this._map.tiles.splice(exist, 1, tile);
+      } else {
+        this._map.tiles.push(tile);
+      }
     }
     this.svc.drawImageLayer2(this.shadowMap.shadow, () => this.rerender());
     this.actionAll();
   }
 
   @Input() public set zoom(scroll: number) {
-    if (!scroll) { return; }
+    if (!scroll) {
+      return;
+    }
 
     const X = this.cvs.set.parentSize[0] / 2;
     const Y = this.cvs.set.parentSize[1] / 2;
@@ -228,25 +260,56 @@ export class NgxCanvasIsomapComponent implements OnInit {
   }
 
   @Input() public set locate(mark: string) {
-    if (!mark) { return; }
+    if (!mark) {
+      return;
+    }
     const limits = [10000, 10000, 0, 0];
 
-    const found = this._map.tiles.filter(_ => _.tags && _.tags.includes(mark)).map(_ => {
-      const co = [];
-      this.svc.toIso(
-        _.coord,
-        this.cvs.set,
-        this.cvs.config,
-        this.cvs.map,
-        co
-      );
-      return co;
-    }).forEach(_ => {
-      limits[0] = Math.min(limits[0], _[0] + (this.cvs.set.offset[0] + this.cvs.set.border[0]) * this.cvs.set.scale) - 50;
-      limits[1] = Math.min(limits[1], _[1] + (this.cvs.set.offset[1] + this.cvs.set.border[1]) * this.cvs.set.scale) - 50;
-      limits[2] = Math.max(limits[2], _[0] + this.cvs.set.tileSize[0] + (this.cvs.set.offset[2] + this.cvs.set.border[2]) * this.cvs.set.scale) + 50;
-      limits[3] = Math.max(limits[3], _[1] + this.cvs.set.tileSize[1] + (this.cvs.set.offset[3] + this.cvs.set.border[3]) * this.cvs.set.scale) + 50;
-    });
+    const found = this._map.tiles
+      .filter(_ => _.tags && _.tags.includes(mark))
+      .map(_ => {
+        const co = [];
+        this.svc.toIso(
+          _.coord,
+          this.cvs.set,
+          this.cvs.config,
+          this.cvs.map,
+          co
+        );
+        return co;
+      })
+      .forEach(_ => {
+        limits[0] =
+          Math.min(
+            limits[0],
+            _[0] +
+              (this.cvs.set.offset[0] + this.cvs.set.border[0]) *
+                this.cvs.set.scale
+          ) - 50;
+        limits[1] =
+          Math.min(
+            limits[1],
+            _[1] +
+              (this.cvs.set.offset[1] + this.cvs.set.border[1]) *
+                this.cvs.set.scale
+          ) - 50;
+        limits[2] =
+          Math.max(
+            limits[2],
+            _[0] +
+              this.cvs.set.tileSize[0] +
+              (this.cvs.set.offset[2] + this.cvs.set.border[2]) *
+                this.cvs.set.scale
+          ) + 50;
+        limits[3] =
+          Math.max(
+            limits[3],
+            _[1] +
+              this.cvs.set.tileSize[1] +
+              (this.cvs.set.offset[3] + this.cvs.set.border[3]) *
+                this.cvs.set.scale
+          ) + 50;
+      });
 
     const width = limits[2] - limits[0];
     const height = limits[3] - limits[1];
@@ -270,10 +333,33 @@ export class NgxCanvasIsomapComponent implements OnInit {
   private touchPinchLastEvent: undefined | TouchEvent;
   private refreshInterval = undefined;
 
-  constructor(el: ElementRef, private svc: NgxCanvasIsomapService) {}
+  constructor(el: ElementRef, private svc: NgxCanvasIsomapService) {
+    const reg = (
+      event: string,
+      action: (e: MouseEvent | WheelEvent | TouchEvent) => any
+    ) =>
+      el.nativeElement.addEventListener(
+        event,
+        e => {
+          action(e);
+          e.preventDefault();
+        },
+        {
+          passive: false
+        }
+      );
+
+    reg('touchmove', (e: TouchEvent) => this.onTouchRouter(e));
+    reg('dblclick', (e: MouseEvent) => this.onZoomByDblClick(e));
+    reg('mousewheel', (e: WheelEvent) => this.onZoomByWheel(e));
+    reg('mouseup', (e: MouseEvent) => this.onMouseup(e));
+    reg('mouseout', (e: MouseEvent) => this.onMouseup(e));
+    reg('mousemove', (e: MouseEvent) => this.onMoveByMouse(e));
+    reg('mousedown', (e: MouseEvent) => this.onMousedown(e));
+  }
 
   private initAll() {
-//    console.debug('init all');
+    //    console.debug('init all');
     this.initCanvas(this.cvs);
     for (const shadow of Object.values(this.shadowMap)) {
       this.initCanvas(shadow, undefined, [...this.cvs.set.parentSize]);
@@ -291,8 +377,8 @@ export class NgxCanvasIsomapComponent implements OnInit {
     this.svc.preloadCanvas2(layer, dimensions);
   }
   private actionAll() {
-//    console.debug('action all');
-//    this.svc.drawImageLayer2(this.shadowMap.shadow, () => this.rerender());
+    //    console.debug('action all');
+    //    this.svc.drawImageLayer2(this.shadowMap.shadow, () => this.rerender());
     this.svc.drawTextLayer2(this.shadowMap.shadowText, this.cvs.set.scale);
     this.svc.drawBackgroundLayer2(this.shadowMap.shadowBackground);
     this.svc.resize2(
@@ -304,11 +390,11 @@ export class NgxCanvasIsomapComponent implements OnInit {
   }
 
   ngOnInit() {
-//    console.debug('on init');
+    //    console.debug('on init');
     this.initAll();
   }
 
-  @HostListener('window:resize', ['$event'])
+  @HostListener('window:resize')
   resize() {
     this.svc.resize2(
       this.cvs.el.clientWidth - this.cvs.set.parentSize[0],
@@ -318,7 +404,6 @@ export class NgxCanvasIsomapComponent implements OnInit {
     this.rerender();
   }
 
-  @HostListener('touchmove', ['$event'])
   onTouchRouter(event: TouchEvent) {
     if (event.touches.length === 1) {
       this.onMoveByTouch(event);
@@ -328,7 +413,6 @@ export class NgxCanvasIsomapComponent implements OnInit {
     this.rerender();
   }
 
-  @HostListener('dblclick', ['$event'])
   onZoomByDblClick(event: MouseEvent) {
     const X = event.offsetX;
     const Y = event.offsetY;
@@ -336,13 +420,8 @@ export class NgxCanvasIsomapComponent implements OnInit {
 
     this.zoomFn(X, Y, scroll);
     this.rerender();
-
-    if (event.preventDefault) {
-      event.preventDefault();
-    }
   }
 
-  @HostListener('mousewheel', ['$event'])
   onZoomByWheel(event: WheelEvent) {
     const X = event.offsetX;
     const Y = event.offsetY;
@@ -350,10 +429,6 @@ export class NgxCanvasIsomapComponent implements OnInit {
 
     this.zoomFn(X, Y, scroll);
     this.rerender();
-
-    if (event.preventDefault) {
-      event.preventDefault();
-    }
   }
 
   // will be called directly by router of touch
@@ -391,10 +466,6 @@ export class NgxCanvasIsomapComponent implements OnInit {
     this.touchPinchLastEvent = event;
 
     this.zoomFn(X, Y, scroll);
-
-    if (event.preventDefault) {
-      event.preventDefault();
-    }
   }
 
   private prevClick = [];
@@ -413,8 +484,6 @@ export class NgxCanvasIsomapComponent implements OnInit {
     }
   }
 
-  @HostListener('mouseup', ['$event'])
-  @HostListener('mouseout', ['$event'])
   onMouseup(event: MouseEvent) {
     if (!this.mouseDown) {
       return;
@@ -440,14 +509,13 @@ export class NgxCanvasIsomapComponent implements OnInit {
       if (found.length > 0) {
         this.selected.emit(found[0]);
       } else {
-        this.selected.emit(undefined);
+        this.selected.emit({ coord: co } as Tile<any>);
       }
     }
   }
 
-  @HostListener('mousemove', ['$event'])
   onMoveByMouse(event: MouseEvent) {
-    if (this.mouseDown) {
+  if (this.mouseDown) {
       this.moveByMouse(event);
       this.rerender();
     }
@@ -455,9 +523,12 @@ export class NgxCanvasIsomapComponent implements OnInit {
   // will be called by touch router
   onMoveByTouch(event: TouchEvent) {
     this.moveByTouch(event);
+
+    if (event.stopPropagation) {
+      event.stopPropagation();
+    }
   }
 
-  @HostListener('mousedown', ['$event'])
   onMousedown(event: MouseEvent) {
     this.mouseDown = true;
     this.mouseDownStartEvent = event;
@@ -481,9 +552,6 @@ export class NgxCanvasIsomapComponent implements OnInit {
     );
 
     this.touchDownLastEvent = event;
-    if (event.preventDefault) {
-      event.preventDefault();
-    }
   }
 
   private moveByMouse(event: MouseEvent) {
@@ -493,9 +561,6 @@ export class NgxCanvasIsomapComponent implements OnInit {
     );
 
     this.mouseDownLastEvent = event;
-    if (event.preventDefault) {
-      event.preventDefault();
-    }
   }
 
   private moveFn(moveX: number, moveY: number) {
@@ -519,5 +584,8 @@ export class NgxCanvasIsomapComponent implements OnInit {
         this.rerender();
       }, this._config.refresh);
     }
+  }
+
+  ngOnDestroy(): void {
   }
 }

@@ -1,6 +1,6 @@
 {
   "name": "ngx-canvas-isomap",
-  "version": "0.1.1",
+  "version": "0.1.8",
   "description": "ngx-canvas-isomap - provides a isometric map that visualizes maps of non-gaming scenarious such as shopfloor or building plans. Calculation behind is rather simple so for gaming scenarious you might consider Unity etc. Currently the isometric map provides functionality like zooming & moving map (mouse & touch), marking & locating tiles (use tag-field), multiple image layers (please consider ordering properly back to front).",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"

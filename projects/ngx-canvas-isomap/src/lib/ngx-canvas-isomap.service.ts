@@ -33,6 +33,12 @@ export class NgxCanvasIsomapService {
                 resolver(true);
               }
             };
+            img.onerror = ___ => {
+              loadingImages[__] = false;
+              if (--loading === 0) {
+                resolver(true);
+              }
+            };
             img.src = 'assets/tiles/' + __ + '.svg';
           }
         })
@@ -584,6 +590,7 @@ export class NgxCanvasIsomapService {
     config: CanvasConfig,
     map: Map<any>
   ) {
+    console.log(settings);
     const TILE_WIDTH_HALF = (settings.tileSize[0] / 2) * settings.scale;
     const TILE_HEIGHT_HALF = TILE_WIDTH_HALF / 2;
     const BORDER_TOP =
@@ -594,7 +601,7 @@ export class NgxCanvasIsomapService {
       settings.offset[ORRIENTATION.WEST] +
       settings.border[ORRIENTATION.WEST] +
       (settingS.offset[ORRIENTATION.WEST]) / config.maxZoom +
-      settings.parentSize[0] / (map.size[0] / map.size[1] + 1);
+      (settings.parentSize[0] - settings.border[ORRIENTATION.WEST] - settings.border[ORRIENTATION.EAST]) / (map.size[0] / map.size[1] + 1);
     return [
       Math.floor(
         ((2 * (px[1] - BORDER_TOP * settings.scale)) / TILE_WIDTH_HALF +
